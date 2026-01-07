@@ -1,0 +1,262 @@
+// ==============================
+// IMPORT REQUIRED LIBRARIES
+// ==============================
+
+// Import System namespace
+// This namespace provides basic classes like Console and DateTime
+using System;
+
+// Import Generic Collections namespace
+// This namespace allows us to use List<T>
+using System.Collections.Generic;
+
+
+// ==============================
+// INTERFACE (ABSTRACTION)
+// ==============================
+
+// Interface declaration
+// An interface is like a rule book
+// Any class that implements this interface MUST define ShowInfo()
+interface IPrintable
+{
+    // Method declaration only
+    // No body is allowed in interface methods
+    // This method must return a string
+    string ShowInfo();
+}
+
+
+// ==============================
+// ABSTRACT BASE CLASS
+// ==============================
+
+// Abstract class declaration
+// Abstract class represents a general transaction
+// Abstract class cannot be instantiated (no object can be created)
+abstract class CashTransaction : IPrintable
+{
+    // Public integer variable to store transaction ID
+    public int Id;
+
+    // Public DateTime variable to store date of transaction
+    public DateTime Date;
+
+    // Public decimal variable to store transaction amount
+    // Decimal is used for money to maintain accuracy
+    public decimal Amount;
+
+    // Public string variable to store note or description
+    // Initialized with empty string
+    public string Note = "";
+
+    // Abstract method declaration
+    // Child classes MUST override this method
+    // This method will return transaction details
+    public abstract string ShowInfo();
+}
+
+
+// ==============================
+// EXPENSE CLASS
+// ==============================
+
+// Expense class declaration
+// This class inherits CashTransaction
+// Represents money going OUT
+class Expense : CashTransaction
+{
+    // Public string variable to store expense category
+    // Example: Food, Travel, Stationery
+    public string Category = "";
+
+    // Override keyword is used to implement abstract method
+    // This method returns formatted expense information
+    public override string ShowInfo()
+    {
+        // Return expense details as a single string
+        return "EXPENSE | " + Amount + " | " + Category + " | " + Note;
+    }
+}
+
+
+// ==============================
+// INCOME CLASS
+// ==============================
+
+// Income class declaration
+// This class inherits CashTransaction
+// Represents money coming IN
+class Income : CashTransaction
+{
+    // Public string variable to store income source
+    // Example: Office Cash, Bank
+    public string Source = "";
+
+    // Override abstract method from parent class
+    // This method returns formatted income information
+    public override string ShowInfo()
+    {
+        // Return income details as a single string
+        return "INCOME  | " + Amount + " | " + Source + " | " + Note;
+    }
+}
+
+
+// ==============================
+// GENERIC LEDGER CLASS
+// ==============================
+
+// Generic class declaration
+// <T> means this class works with any data type
+// where T : CashTransaction ensures type safety
+class Ledger<T> where T : CashTransaction
+{
+    // Private List to store transactions
+    // List<T> is a dynamic array
+    private List<T> list = new List<T>();
+
+    // Public method to add transaction to ledger
+    public void Add(T item)
+    {
+        // Add transaction object into the list
+        list.Add(item);
+    }
+
+    // Public method to get all transactions
+    public List<T> All()
+    {
+        // Return the list of transactions
+        return list;
+    }
+}
+
+
+// ==============================
+// CALCULATOR CLASS
+// ==============================
+
+// Calculator class declaration
+// This class is responsible only for calculations
+class Calculator
+{
+    // Static generic method to calculate total amount
+    // Static means no object creation is needed
+    // Generic allows reuse for Income and Expense
+    public static decimal CalculateTotal<T>(Ledger<T> ledger)
+        where T : CashTransaction
+    {
+        // Decimal variable to store total sum
+        decimal total = 0;
+
+        // Loop through each transaction in ledger
+        foreach (T item in ledger.All())
+        {
+            // Add transaction amount to total
+            total = total + item.Amount;
+        }
+
+        // Return the final calculated total
+        return total;
+    }
+
+    // Static method to calculate remaining balance
+    public static decimal CalculateBalance(decimal income, decimal expense)
+    {
+        // Balance = Income - Expense
+        return income - expense;
+    }
+}
+
+
+// ==============================
+// MAIN PROGRAM CLASS
+// ==============================
+
+// Program class declaration
+class Program
+{
+    // Main method
+    // This is the entry point of the application
+    static void Main()
+    {
+        // Create Income Ledger object
+        // This ledger will store Income objects
+        Ledger<Income> incomeLedger = new Ledger<Income>();
+
+        // Add an Income transaction to ledger
+        incomeLedger.Add(new Income
+        {
+            Id = 1,                         // Assign transaction ID
+            Date = DateTime.Today,          // Assign today's date
+            Amount = 1000,                  // Assign income amount
+            Source = "Office Cash",         // Assign income source
+            Note = "Petty cash received"    // Assign note
+        });
+
+        // Create Expense Ledger object
+        // This ledger will store Expense objects
+        Ledger<Expense> expenseLedger = new Ledger<Expense>();
+
+        // Add first Expense transaction
+        expenseLedger.Add(new Expense
+        {
+            Id = 2,                         // Assign transaction ID
+            Date = DateTime.Today,          // Assign date
+            Amount = 200,                   // Assign expense amount
+            Category = "Food",              // Assign category
+            Note = "Snacks"                 // Assign note
+        });
+
+        // Add second Expense transaction
+        expenseLedger.Add(new Expense
+        {
+            Id = 3,                         // Assign transaction ID
+            Date = DateTime.Today,          // Assign date
+            Amount = 150,                   // Assign expense amount
+            Category = "Stationery",        // Assign category
+            Note = "Pens & paper"           // Assign note
+        });
+
+        // Calculate total income using Calculator class
+        decimal totalIncome = Calculator.CalculateTotal(incomeLedger);
+
+        // Calculate total expense using Calculator class
+        decimal totalExpense = Calculator.CalculateTotal(expenseLedger);
+
+        // Calculate remaining balance
+        decimal balance = Calculator.CalculateBalance(totalIncome, totalExpense);
+
+        // Display income heading on console
+        Console.WriteLine("----- INCOME -----");
+
+        // Loop through income transactions
+        foreach (Income i in incomeLedger.All())
+        {
+            // Display each income transaction
+            Console.WriteLine(i.ShowInfo());
+        }
+
+        // Display expense heading
+        Console.WriteLine("\n----- EXPENSE -----");
+
+        // Loop through expense transactions
+        foreach (Expense e in expenseLedger.All())
+        {
+            // Display each expense transaction
+            Console.WriteLine(e.ShowInfo());
+        }
+
+        // Display separator line
+        Console.WriteLine("\n-------------------");
+
+        // Display total income
+        Console.WriteLine("Total Income  : " + totalIncome);
+
+        // Display total expense
+        Console.WriteLine("Total Expense : " + totalExpense);
+
+        // Display remaining balance
+        Console.WriteLine("Balance Left  : " + balance);
+    }
+}
